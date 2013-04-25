@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name       Vimstagram
-// @namespace  http://www.instagram.com/
+// @namespace  https://github.com/ewenig/vimstagram
 // @version    0.1
 // @description  Enables Vim-style keys on the Instagram timeline.
 // @description  j/k: scroll down/up a post
