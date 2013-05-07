@@ -16,7 +16,6 @@ var populate_offsets = function() {
   $('div.timelineItem').each(function() {
     offsets.push($(this).offset().top-40);
   });
-  if (offsets.length && obs != null) { obs.disconnect(); obs = null; $(document).ajaxSuccess(populate_offsets); }
 }
 
 MutationObserver = unsafeWindow.MutationObserver || unsafeWindow.WebKitMutationObserver;
@@ -24,7 +23,7 @@ var obs = new MutationObserver(populate_offsets);
 obs.observe(document.body, {subtree: true, childList: true});
 
 $(document).keydown(function(e){
-  if (!$.inArray(e.keyCode,(74,75,76)) || unsafeWindow.location.pathname != "/") return;
+  if (!$.inArray(e.keyCode,(74,75,76)) || unsafeWindow.location.pathname != "/" || $(":focus").prop("tagName") == "INPUT") return;
   var y = $(unsafeWindow).scrollTop()
   var load_y = $('div.timelineLast').offset().top;
   if (e.keyCode == 76) { // like current post
