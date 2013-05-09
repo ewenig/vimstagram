@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Vimstagram
 // @namespace  http://www.instagram.com/
-// @version    0.1
+// @version    0.2
 // @description  Enables Vim-style keys on the Instagram timeline.
 // @description  j/k: scroll down/up a post
 // @description  l:   like the current post
@@ -11,11 +11,26 @@
 // ==/UserScript==
 
 var $ = unsafeWindow.jQuery;
-var offsets = new Array();
-var populate_offsets = function() {
+var offsets;
+var state = -1;
+
+var populate_offsets = function() { // grab the offsets of all timeline elements
+  offsets = new Array();
   $('div.timelineItem').each(function() {
     offsets.push($(this).offset().top-40);
   });
+}
+
+var adjust_state = function() { // all adjustments to `state` should only happen in this function
+  var scroll = $('body').scrollTop();
+  while (scroll < offsets[state]) state--;
+  while (scroll >= offsets[state+1]) state++;
+}
+
+var load_more = function() { // load more 
+  if ($(unsafeWindow).scrollTop() + $(unsafeWindow).height() > $('div.timelineLast').offset().top) {
+    $("div.timelineLast").find('a')[0].click();
+  }
 }
 
 MutationObserver = unsafeWindow.MutationObserver || unsafeWindow.WebKitMutationObserver;
@@ -23,32 +38,15 @@ var obs = new MutationObserver(populate_offsets);
 obs.observe(document.body, {subtree: true, childList: true});
 
 $(document).keydown(function(e){
-  if (!$.inArray(e.keyCode,(74,75,76)) || unsafeWindow.location.pathname != "/" || $(":focus").prop("tagName") == "INPUT") return;
-  var y = $(unsafeWindow).scrollTop()
-  var load_y = $('div.timelineLast').offset().top;
+  if ($.inArray(e.keyCode,[74,75,76]) == -1 || unsafeWindow.location.pathname != "/" || $(":focus").prop("tagName") == "INPUT") return;
+  adjust_state();
+  var y = $(unsafeWindow).scrollTop();
   if (e.keyCode == 76) { // like current post
-    try {$('a.timelineLikeButton')[$.inArray(y,offsets)].click()}
-    catch (TypeError) {}
+    if ((i = $.inArray(y,offsets)) != -1) $('a.timelineLikeButton')[i].click();
   }
   
-  var doneFlag = 0;
-  $.each(offsets,function(i,v) {
-    if (doneFlag) return;
-    if (e.keyCode == 74) { // scroll down
-      if (y < offsets[0]) { $('body').animate({scrollTop:offsets[0]},100); doneFlag = 1; }
-      if (y >= v && y < offsets[i+1]) {
-        $('body').animate({scrollTop:offsets[i+1]},100);
-        doneFlag = 1;
-      }
-    } else if (e.keyCode == 75) { // scroll up
-      if (y <= v && y > offsets[i-1]) {
-        $('body').animate({scrollTop:offsets[i-1]},100);
-        doneFlag = 1;
-      }
-    }
-  });
+  if (e.keyCode == 74) $('body').animate({scrollTop:offsets[state+1]},100); // scroll down
+  else if (e.keyCode == 75) $('body').animate({scrollTop:offsets[(y == offsets[state]) ? state-1 : state]},100); // scroll up
   
-  setTimeout(function() {if (y + $(unsafeWindow).height() > load_y) {
-    $("div.timelineLast").find('a')[0].click()
-  }},100);
+  setTimeout(load_more,150);
 });
